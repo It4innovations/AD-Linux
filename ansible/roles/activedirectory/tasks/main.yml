@@ -1,0 +1,126 @@
+---
+- name: Update system
+  yum:
+     name: "*"
+     state: latest
+
+- name: Install Epel-release
+  yum:
+     name: epel-release
+     state: latest
+
+- name: Installation of required packages
+  yum:
+    name: "{{ packages }}"
+    state: present    ## Actual version, can be update for latest release
+  vars:
+    packages:
+    - realmd
+    - sssd
+    - oddjob
+    - oddjob-mkhomedir
+    - adcli
+    - samba-common
+    - samba-common-tools
+    - ntpdate
+    - ntp
+    - openldap-clients
+    - python-pip
+    - wget
+    - tmux
+    - mc
+    - vim
+
+- name: Install pexpect using pip
+  pip:
+    name: pexpect
+
+- name: Connect to AD
+  expect:
+    command: /bin/bash -c "/usr/sbin/realm join --user={{ domain_admin }} {{ domain_controller }}"    ## Connection to domain
+    responses:
+      Password for *: "{{ password }}"     ## Password require
+  ignore_errors: true
+
+- name: Wait until the file /etc/sssd/sssd.conf is present before continuing
+  wait_for:
+    timeout: 1900      
+    path: /etc/sssd/sssd.conf
+
+- name: Edit sssd.conf and add ssh atribute
+  blockinfile:    ## Edit more lines
+    path: /etc/sssd/sssd.conf    ## file path
+    insertafter: "access_provider = ad"    ## Insert after some line or EOF
+    block: |     ## block of lines which will be inserted
+      ldap_user_extra_attrs = sshPublicKeys
+      ldap_user_ssh_public_key = sshPublicKeys
+      ldap_use_tokengroups = True
+
+- name: Edit services in sssd
+  lineinfile:    ## Edit just one line
+    dest: /etc/sssd/sssd.conf
+    state: present
+    regexp: '^services = nss, pam'
+    line: 'services = nss, pam, sudo, ssh'
+    insertafter: '^\[sssd\]'
+  notify:
+    - restart sssd    ## restart sssd
+
+      #- name: Edit rdns in krb5.conf
+      #  lineinfile:
+      #    dest: /etc/krb5.conf
+      #    state: present
+      #    regexp: '^ rdns = false'
+      #    line: ' rdns = true'
+      #    insertafter: '^\[libdefaults\]'      ## Insert after
+
+- name: Edit file sshd_config
+  blockinfile:    ## Edit more lines
+    path: /etc/ssh/sshd_config
+    block: |
+      PubkeyAuthentication yes
+      AuthorizedKeysCommandUser root
+      AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys
+      KerberosAuthentication yes
+      AllowGroups {{ ssh_groups }}
+  notify: restart sshd    ## restart sshd defined by handlers
+  tags: sshd_groups
+
+- name: Disable SSH password login
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "^#?PasswordAuthentication"
+    line: "PasswordAuthentication no"
+  notify: restart sshd
+
+- name: Disable SSH root login
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+  notify: restart sshd
+  tags: sshd_groups
+
+- name: Allow specified groups to sudo
+  template:
+    src: sudoers.j2
+    dest: /etc/sudoers.d/sudoers
+    validate: 'visudo -cf %s'
+    mode: 0440
+  tags: sudoers
+
+- name: Allow specified groups to sudo NP
+  template:
+    src: sudoersnp.j2
+    dest: /etc/sudoers.d/sudoersnp
+    validate: 'visudo -cf %s'
+    mode: 0440
+  tags: sudoersnp
+
+- name: Permit port 443 TCP
+  firewalld:
+    port: 443/tcp
+    permanent: yes
+    state: enabled
+
+

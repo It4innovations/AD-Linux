@@ -1,0 +1,11 @@
+---
+## Configure connection CentOS 7 to AD
+- name: Configure AD connection
+  hosts: all
+  become: yes
+  roles:
+    - activedirectory
+  vars_prompt: ## Vars which will be used next in script
+    - name: "password" ## Heslo
+      prompt: "Enter domain administrator password " ## String to notify user
+      private: yes ## Password visibility private ( yes / no )

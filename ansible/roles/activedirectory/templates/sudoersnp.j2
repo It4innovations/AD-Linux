@@ -1,0 +1,11 @@
+{% if sudo_groups_nopasswd is defined %}
+{% for item in sudo_groups_nopasswd %}
+%{{ item }} ALL=(ALL:ALL) NOPASSWD:ALL
+{% endfor %}
+{% endif %}
+
+{% if sudo_groups_nopasswd_ADAS is defined %}
+{% for item in sudo_groups_nopasswd_ADAS %}
+%{{ item }} ALL=(ALL:ALL) NOPASSWD:ALL
+{% endfor %}
+{% endif %}

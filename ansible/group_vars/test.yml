@@ -1,0 +1,6 @@
+---
+ssh_groups: 
+          - server\ admins@contoso.com
+          - maintanence@contoso.com
+sudo_groups_Test:
+          - server\ admins@contoso.com

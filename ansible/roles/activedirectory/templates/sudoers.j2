@@ -1,0 +1,11 @@
+{% if sudo_groups is defined %}
+{% for item in sudo_groups %}
+%{{ item }} ALL=(ALL:ALL) ALL
+{% endfor %}
+{% endif %}
+
+{% if sudo_groups_ADAS is defined %}
+{% for item in sudo_groups_ADAS %}
+%{{ item }} ALL=(ALL:ALL) ALL
+{% endfor %}
+{% endif %}
