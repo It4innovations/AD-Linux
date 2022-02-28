@@ -13,6 +13,10 @@ sudo_groups:
 	  - test_admins@contoso.com
           - test2_admins@contoso.com
 ```
+-	In the folder **group_vars** are files for basic configuration. 
+	-	The file **all.yml** contains information about domain.
+	-	The file **test.yml** contains basic groups which should have access to all servers.
+
 ### Execution:
 At startup, the user is prompted twice for passwords, the first time for ssh login to the servers described in the inventory file. The second time is to enter the domain login. The startup command is:
 
