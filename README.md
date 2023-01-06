@@ -21,3 +21,7 @@ sudo_groups:
 At startup, the user is prompted twice for passwords, the first time for ssh login to the servers described in the inventory file. The second time is to enter the domain login. The startup command is:
 
 > ansible-playbook -i inventory -u root -k ad.yml
+
+
+# Acknowledgement
+This work was supported by the Ministry of Education, Youth and Sports of the Czech Republic through the e-INFRA CZ (ID:90140).
